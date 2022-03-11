@@ -30,7 +30,32 @@ final class UnbalancedException extends Exception {
 
 public class Dictionary {
 	public  String id;
+	public  String n_id;
 	public  List<String> wordList;
+	public int[] percentages;
+	
+	public HashMap<Integer, Integer> histogram() {
+		HashMap<Integer, Integer> histo = new HashMap<Integer, Integer>();
+		int sum = 0;
+		for (String word : wordList) {
+			sum++;
+			if (word.length() == 6) {
+				percentages[0]++;
+			} else if (word.length() < 10) {
+				percentages[1]++;
+			} else {
+				percentages[2]++;
+			}
+			if (histo.containsKey(word.length()))
+				histo.put(word.length(), histo.get(word.length()) + 1);
+			else
+				histo.put(word.length(), 1);
+		}
+		for (int i = 0; i < 3; i++) {
+			percentages[i] = percentages[i] * 100 / sum;
+		}
+		return histo;
+	}
 	
 	public void fill_list() {
 		StringBuilder urlstr = new StringBuilder("https://openlibrary.org/works/");
@@ -90,8 +115,9 @@ public class Dictionary {
 		if (count_9 < 0.2 * wordSet.size())
 			throw new UnbalancedException(count_9, wordSet.size());
 		File f = null;
+		System.out.println(wordSet);
 		try {
-			f = new File("hangman_DICTIONARY-" + id + ".txt");
+			f = new File("hangman_DICTIONARY-" + n_id + ".txt");
 			if (f.createNewFile()) {
 				System.out.println("Created dictionary: " + f.getName());
 		    } else {
@@ -110,6 +136,7 @@ public class Dictionary {
 		}
 		for (String word : wordSet) {
 			try {
+				System.out.println(word);
 				writer.write(word);
 				writer.write(System.lineSeparator());
 			} catch (IOException e) {
@@ -124,9 +151,13 @@ public class Dictionary {
 		}
 	}
 	
-	public Dictionary (String name_id, String sid, boolean duplicates_tolerated) throws UndersizeException, InvalidCountException, InvalidRangeException, UnbalancedException {
+	public Dictionary (String name_id, String sid, boolean duplicates_tolerated) throws Exception {
+		if (sid == "" || sid == null)
+			throw new Exception("Please type a valid library ID");
+		percentages = new int[3];
 		id = sid;
-		File f = new File("hangman_DICTIONARY-" + name_id + ".txt");
+		n_id = name_id;
+		File f = new File("hangman_DICTIONARY-" + n_id + ".txt");
 		if (!f.exists() || f.isDirectory()) {
 			wordList = new ArrayList<String>();
 			fill_list();

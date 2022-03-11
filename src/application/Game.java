@@ -3,7 +3,6 @@ import java.io.*;
 import java.util.*;
 
 
-
 public class Game {
 	static final class ProbabilityComparator implements Comparator<Character> {
 		private int index;
@@ -30,24 +29,11 @@ public class Game {
 	public static int correct;
 	
 	public Game(Dictionary dict) {
-		g_id = id;
+		g_id = dict.id;
 		correct = 0;
 		points = 0;
-		lives = 6;
+		lives = Main.initial_lives;
 		wordList = new ArrayList<>(dict.wordList);
-		try {
-			File f = new File("hangman_DICTIONARY-" + id + ".txt");
-			FileReader fr = new FileReader(f);
-			BufferedReader br = new BufferedReader(fr);
-			String word;
-			while ((word = br.readLine()) != null) {
-				wordList.add(word);
-			}
-			br.close();
-		} catch (Exception e) {
-			e.getMessage();
-			e.printStackTrace();
-		}
 		target = wordList.get((int) (Math.random() * (wordList.size() - 1)));
 		active = new boolean[target.length()];
 		Arrays.fill(active, true);
@@ -77,15 +63,11 @@ public class Game {
 		}
 	}
 	
-	public static HashMap<Integer, Integer> histogram() {
-		HashMap<Integer, Integer> histo = new HashMap<Integer, Integer>();
-		for (String word : wordList) {
-			if (histo.containsKey(word.length()))
-				histo.put(word.length(), histo.get(word.length()) + 1);
-			else
-				histo.put(word.length(), 1);
-		}
-		return histo;
+	public boolean won() {
+		boolean result = false;
+		for (boolean check : active)
+			result |= check;
+		return !result;
 	}
 	
 	public static void remove (String word) {
@@ -121,7 +103,7 @@ public class Game {
 	}
 	
 	public static void not_found (int position, char wrongLetter) {
-		points -= 15;
+		points = points - 15 > 0 ? points - 15 : 0;
 		lives--;
 		List<String> newList= new ArrayList<String>();
 		for (String word : wordList) {
@@ -138,6 +120,14 @@ public class Game {
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 			result.add(ch);
 		Collections.sort(result, new ProbabilityComparator(index));
+		return result;
+	}
+	
+	public static String probability_string (int index) {
+		String result = "|";
+		for (Character ch : sort_by_probability(index)) {
+			result += String.valueOf(ch) + "|";
+		}
 		return result;
 	}
 	

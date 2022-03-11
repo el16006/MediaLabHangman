@@ -1,1 +1,12 @@
-/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+.table-row-cell:empty {
+    -fx-background-color: white;
+}
+ 
+.table-row-cell:empty .table-cell {
+    -fx-border-width: 0px;
+}
+
+.table-view{
+-fx-border-color: white;
+-fx-background-insets: 0;
+-fx-padding: 0;}
