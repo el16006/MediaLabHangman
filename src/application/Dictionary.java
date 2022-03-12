@@ -27,13 +27,41 @@ final class UnbalancedException extends Exception {
 		super("Only " + (int)(count*100/size) + "% of words contain 9 or more letters");
 	}
 }
-
+/**
+ * <h1>A class for dictionaries</h1>
+ * <p>
+ * Objects of this class represent sets of words a game can be played on, 
+ * along with information about word length distribution and the names of
+ * the related local files and open library works.
+ * A Dictionary object is the only argument of {@link application.Game Game}'s
+ * constructor
+ * @author P_Eleftherakis
+ * @version 1.0
+ * @since 2022
+*/
 public class Dictionary {
+	/**
+	 * This field is the actual open library ID of the work the words 
+	 * will be generated from.
+	 */
 	public  String id;
+	/**
+	 * The dictionary will be generated in the file {@code hangman_DICTIONARY-n_id.txt}
+	 */
 	public  String n_id;
+	/**
+	 * A list that contains all words in the dictionary
+	 */
 	public  List<String> wordList;
+	/**
+	 * An array of length 3, whose elements represent the amount of words with
+	 * 6, 7-9 and 10+ letters respectively.
+	 */
 	public int[] percentages;
-	
+	/**
+	 * Updates percentages
+	 * @return A histogram of word lengths in the dictionary.
+	 */
 	public HashMap<Integer, Integer> histogram() {
 		HashMap<Integer, Integer> histo = new HashMap<Integer, Integer>();
 		percentages = new int[3];
@@ -57,7 +85,12 @@ public class Dictionary {
 		}
 		return histo;
 	}
-	
+	/**
+	 * Builds the URL of the work we are going to use, opens a stream to it,
+	 * parses the JSON file, checks if the "description" field is a JSONObject
+	 * or a String, tokenizes it avoiding numbers and punctuation, and adds all 
+	 * words with 6 or more characters to wordList
+	 */
 	public void fill_list() {
 		StringBuilder urlstr = new StringBuilder("https://openlibrary.org/works/");
 		urlstr.append(id);
@@ -99,7 +132,15 @@ public class Dictionary {
 				wordList.add(str.toUpperCase());
 		}
 	}
-	
+	/**
+	 * Checks for all exception types below in wordList and then creates the 
+	 * local dictionary file
+	 * @param duplicates_tolerated If true, it won't throw @see InvalidCountException
+	 * @throws UndersizeException When fewer than 20 words are found
+	 * @throws InvalidCountException When duplicates are found
+	 * @throws InvalidRangeException When a word with less than 6 letters is found
+	 * @throws UnbalancedException When words with 9+ letters are more than 20%
+	 */
 	public void create_dictionary(boolean duplicates_tolerated) 
 			throws UndersizeException, InvalidCountException, InvalidRangeException, UnbalancedException {
 		HashSet<String> wordSet = new HashSet<String>();
@@ -156,7 +197,15 @@ public class Dictionary {
 			e.printStackTrace();
 		}
 	}
-	
+	/**
+	 * Checks if a local file with the given name id exists. If not it creates
+	 * it by calling the above methods, else it loads it in the new object;
+	 * @param name_id Local file name id
+	 * @param sid Actual Open library id
+	 * @param duplicates_tolerated Passed to {@link application.Dictionary#create_dictionary 
+	 * create_dictionary}
+	 * @throws Exception When invalid IDs are given
+	 */
 	public Dictionary (String name_id, String sid, boolean duplicates_tolerated) throws Exception {
 		if (sid == "" || sid == null)
 			throw new Exception("Please type a valid library ID");
