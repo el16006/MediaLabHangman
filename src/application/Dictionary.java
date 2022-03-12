@@ -36,6 +36,7 @@ public class Dictionary {
 	
 	public HashMap<Integer, Integer> histogram() {
 		HashMap<Integer, Integer> histo = new HashMap<Integer, Integer>();
+		percentages = new int[3];
 		int sum = 0;
 		for (String word : wordList) {
 			sum++;
@@ -84,9 +85,14 @@ public class Dictionary {
 			System.out.println("Cannot parse json file");
 			e.printStackTrace();
 		}
-		JSONObject description = (JSONObject) jobject.get("description");
-		String value = (String) description.get("value"); 
-		StringTokenizer tk = new StringTokenizer(value, " ~`!@#$%^&*()_-=+{}[]|:;'<,>.?\"/" + "\n");
+		String value;
+		if (jobject.get("description").getClass() == JSONObject.class) {
+			JSONObject description = (JSONObject) jobject.get("description");
+			value = (String) description.get("value"); 
+		} else {
+			value = (String) jobject.get("description");
+		}
+		StringTokenizer tk = new StringTokenizer(value, " 1234567890~`!@#$%^&*()_-=+{}[]|:;'<,>.?\"/" + "\n");
 		while (tk.hasMoreTokens()) {
 			String str = tk.nextToken();
 			if (str.length() > 5)

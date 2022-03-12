@@ -61,19 +61,19 @@ public class Main extends Application {
 	private static FlowPane spinroot = null;
 	private static HBox b_array_box = null;
 	private static Button[] button_array;
-	private static GridPane grid;
+	private static GridPane grid, histogrid;
 	private static MenuBar menuBar;
 	private static Menu application, details;
 	private static ImageView application_view, details_view;
+	private static Group imagegroup;
 	private static MenuItem start, load, create, exit, dictionary, rounds, solution;
-	private static StringProperty word_num;
-	private static StringProperty points_num;
-	private static StringProperty successful;
+	private static StringProperty word_num, points_num, successful;
 	private static ObservableList<GameInfo> gamelist;
 	private static VBox finbox;
 	
 	static Game currentGame;
 	static Dictionary currentDictionary;
+	private TableView<GameInfo> table;
 	
 	public static class GameInfo {		
         private final SimpleStringProperty word;
@@ -119,8 +119,6 @@ public class Main extends Application {
 	        return null;
 	    }
 	}
-	
-	private TableView<GameInfo> table;
 	
 	public void end(boolean won) {
 		String winner;
@@ -177,7 +175,7 @@ public class Main extends Application {
 	public void initialize_UI(Stage primaryStage) {
 		primaryStage.setTitle("MediaLab Hangman");
         grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
+        grid.setAlignment(Pos.TOP_LEFT);
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setMinHeight(400);
@@ -224,26 +222,28 @@ public class Main extends Application {
         grid.add(menuBar, 0, 0, 1, 1);
         
         Label words = new Label("Words");
-        grid.add(words, 2, 0);
-        Label wordnum = new Label(word_num.toString());
-        wordnum.textProperty().bind(word_num);
-        grid.add(wordnum, 2, 1);
+        Label words2 = new Label(word_num.toString());
+        words2.textProperty().bind(word_num);
+        VBox wordsnum = new VBox();
+        wordsnum.getChildren().addAll(words, words2);
+        grid.add(wordsnum, 2, 0);
         
         Label points = new Label("Points");
-        grid.add(points, 3, 0);
-        Label pointsnum = new Label(points_num.toString());
-        pointsnum.textProperty().bind(points_num);
-        grid.add(pointsnum, 3, 1);
+        Label points2= new Label(points_num.toString());
+        points2.textProperty().bind(points_num);
+        VBox pointsnum = new VBox();
+        pointsnum.getChildren().addAll(points, points2);
+        grid.add(pointsnum, 3, 0);
         
         Label success = new Label("Success");
-        grid.add(success, 4, 0);
-        Label successrate = new Label(successful.toString());
-        successrate.textProperty().bind(successful);
-        grid.add(successrate, 4, 1);
+        Label success2 = new Label(successful.toString());
+        success2.textProperty().bind(successful);
+        VBox successrate = new VBox();
+        successrate.getChildren().addAll(success, success2);
+        grid.add(successrate, 4, 0);
         
         grid.setGridLinesVisible(false);         
 	}
-	
 	
 	public void activate_button(String id) {
 		int pos = Integer.valueOf(id);
@@ -280,12 +280,13 @@ public class Main extends Application {
         		Alert alert = new Alert(AlertType.ERROR);
         		alert.setTitle("You lose");
         		alert.setHeaderText("You lose, try again");
-        		alert.showAndWait();
+        		alert.show();
         		end(false);
         	}
         });
         grid.getChildren().remove(spinroot);
         spinroot = new FlowPane();
+        spinroot.setPrefWrapLength(200);
         spinroot.setHgap(10);
         spinroot.setVgap(10);
         spinroot.setPadding(new Insets(10));
@@ -296,15 +297,16 @@ public class Main extends Application {
 	public void update_image() {
 		Image image;
 		try {
-			image = new Image(new FileInputStream("hangman" + String.valueOf(currentGame.lives - 1) + ".png"));
+			grid.getChildren().remove(imagegroup);
+			image = new Image(new FileInputStream("hangman" + String.valueOf(currentGame.lives) + ".png"));
 			ImageView imageView = new ImageView(image); 
 		    //imageView.setX(50); 
 		    //imageView.setY(25); 
-		    imageView.setFitHeight(455); 
-		    imageView.setFitWidth(500); 
+		    imageView.setFitHeight(300); 
+		    imageView.setFitWidth(300); 
 		    imageView.setPreserveRatio(true);  
-		    Group root = new Group(imageView); 
-		    grid.add(root, 0, 1);
+		    imagegroup = new Group(imageView); 
+		    grid.add(imagegroup, 0, 1);
 		} catch (FileNotFoundException e) {
 			System.out.println("Cannot find image files");
 			e.printStackTrace();
@@ -318,8 +320,11 @@ public class Main extends Application {
 		VBox[] pairs = new VBox[currentGame.target.length()];
 		for (int i = 0; i < currentGame.target.length(); i++) {
 			String probstring = currentGame.probability_string(i);
-			letterLabels[i] = new Label("Letter " + String.valueOf(i) + ":");
-			stringLabels[i] = new Label(probstring);
+			letterLabels[i] = new Label("Letter " + String.valueOf(i + 1) + ":");
+			if (!currentGame.active[i])
+				stringLabels[i] = new Label(String.valueOf(currentGame.target.charAt(i)));
+			else
+				stringLabels[i] = new Label(probstring);
 			pairs[i] = new VBox();
 			pairs[i].getChildren().addAll(letterLabels[i], stringLabels[i]);
 		}
@@ -327,7 +332,7 @@ public class Main extends Application {
 		finbox = new VBox();
 		finbox.getChildren().add(title);
 		finbox.getChildren().addAll(pairs);
-		grid.add(finbox, 1, 2, 4, 3);
+		grid.add(finbox, 1, 1, 4, 3);
 	}
 	
 	public void set_actions(Stage primaryStage) {
@@ -406,8 +411,7 @@ public class Main extends Application {
             result.ifPresent(pair -> {
             	try {
 					currentDictionary = new Dictionary(pair.getKey(), pair.getValue(), false);
-					currentGame = new Game(currentDictionary);
-					word_num.set(String.valueOf(currentDictionary.wordList.size()));
+					
             	} catch (InvalidCountException e1) {
 					Dialog<ButtonType> duplicates = new Dialog<>();
 					duplicates.setTitle("Proceed by removing duplicates");
@@ -421,16 +425,16 @@ public class Main extends Application {
 		            duplicates.getDialogPane().setContent(gridP);
 		            Optional<ButtonType> pressed = duplicates.showAndWait();
 		            pressed.ifPresent(button-> {
-		            	try {
-		            		currentDictionary = new Dictionary(pair.getKey(), pair.getValue(), true);
-							currentGame = new Game(currentDictionary);	
-							word_num.set(String.valueOf(currentDictionary.wordList.size()));
-		            	} catch (Exception e2) {
-		            		Alert alert = new Alert(AlertType.ERROR);
-		            		alert.setTitle("Error");
-		            		alert.setHeaderText(e2.getMessage());
-		            		alert.setContentText("Try another library ID");
-		            		alert.showAndWait();
+		            	if (button != ButtonType.CANCEL){
+			            	try {
+			            		currentDictionary = new Dictionary(pair.getKey(), pair.getValue(), true);
+			            	} catch (Exception e2) {
+			            		Alert alert = new Alert(AlertType.ERROR);
+			            		alert.setTitle("Error");
+			            		alert.setHeaderText(e2.getMessage());
+			            		alert.setContentText("Try another library ID");			            		
+			            		alert.showAndWait();
+			            	}
 		            	}
 		            });		 
 				} catch (Exception e3) {
@@ -450,7 +454,7 @@ public class Main extends Application {
         		Alert alert = new Alert(AlertType.ERROR);
         		alert.setTitle("Error");
         		alert.setHeaderText("No dictionary loaded");
-        		alert.showAndWait();
+        		alert.show();
         	} else {
 	        	Stage histostage = new Stage();
 	        	histostage.setTitle("Dictionary statistics");
@@ -469,34 +473,34 @@ public class Main extends Application {
 	        	barChart.getData().add(histoseries);
 	        	VBox vbox = new VBox(barChart);
 	        	
-	        	grid = new GridPane();
-	            grid.setAlignment(Pos.TOP_RIGHT);
-	            grid.setHgap(10);
-	            grid.setVgap(10);
-	            grid.setPadding(new Insets(25, 25, 25, 25));
+	        	histogrid = new GridPane();
+	            histogrid.setAlignment(Pos.TOP_RIGHT);
+	            histogrid.setHgap(10);
+	            histogrid.setVgap(10);
+	            histogrid.setPadding(new Insets(25, 25, 25, 25));
 	            
-	            Label words = new Label("6 letters");
-	            grid.add(words, 2, 0);
-	            Label wordnum = new Label(String.valueOf(currentDictionary.percentages[0]) + "%");
-	            grid.add(wordnum, 2, 1);
+	            Label let6 = new Label("6 letters");
+	            histogrid.add(let6, 2, 0);
+	            Label let6count = new Label(String.valueOf(currentDictionary.percentages[0]) + "%");
+	            histogrid.add(let6count, 2, 1);
 	            
-	            Label points = new Label("7-9 letters");
-	            grid.add(points, 3, 0);
-	            Label pointsnum = new Label(String.valueOf(currentDictionary.percentages[1]) + "%");
-	            grid.add(pointsnum, 3, 1);
+	            Label let7 = new Label("7-9 letters");
+	            histogrid.add(let7, 3, 0);
+	            Label let7count = new Label(String.valueOf(currentDictionary.percentages[1]) + "%");
+	            histogrid.add(let7count, 3, 1);
 	            
-	            Label success = new Label("10+ letters");
-	            grid.add(success, 4, 0);
-	            Label successrate = new Label(String.valueOf(currentDictionary.percentages[2]) + "%");
-	            grid.add(successrate, 4, 1);
+	            Label let10 = new Label("10+ letters");
+	            histogrid.add(let10, 4, 0);
+	            Label let10count = new Label(String.valueOf(currentDictionary.percentages[2]) + "%");
+	            histogrid.add(let10count, 4, 1);
 	            
 	        	StackPane rootPane = new StackPane();
 	            Scene scene = new Scene(rootPane, 200, 100);
-	            rootPane.getChildren().addAll(vbox, grid);
+	            rootPane.getChildren().addAll(vbox, histogrid);
 	            histostage.setScene(scene);
 	            histostage.setHeight(300);
 	            histostage.setWidth(500);
-	            histostage.showAndWait();    
+	            histostage.show();    
         	}
         });
         rounds.setOnAction(e -> {
@@ -540,19 +544,21 @@ public class Main extends Application {
              ((Group) scene.getRoot()).getChildren().addAll(vbox);
       
              stage.setScene(scene);
-             stage.showAndWait();
+             stage.show();
         });
         solution.setOnAction(e -> {
         	if (currentGame == null) {
         		Alert alert = new Alert(AlertType.ERROR);
 	    		alert.setTitle("Error");
 	    		alert.setHeaderText("No game currently active");
-	    		alert.showAndWait();
+	    		alert.show();
         	} else {
 	        	Alert alert = new Alert(AlertType.INFORMATION);
 	    		alert.setTitle("This round will count as a loss");
 	    		alert.setHeaderText("Target word was " + currentGame.target);
-	    		alert.showAndWait();
+	    		alert.show();
+	    		currentGame.lives = 6;
+	    		update_image();
 	    		end(false);	    	
         	}
         });   
@@ -569,11 +575,20 @@ public class Main extends Application {
 		successful.set("-");
 		
         initialize_UI(primaryStage);
-        set_actions(primaryStage);        
+        set_actions(primaryStage);     
         Scene scene = new Scene(grid);
+        var image = new Image("file:notebook.jpg", true);
+        var bgImage = new BackgroundImage(
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.DEFAULT,
+                new BackgroundSize(1.0, 1.0, true, true, false, false)
+        );
+        grid.setBackground(new Background(bgImage));
         primaryStage.setScene(scene);
-        primaryStage.setWidth(500);
-        primaryStage.setHeight(400);
+        primaryStage.setWidth(680);
+        primaryStage.setHeight(460);
         primaryStage.show();
     }
 	
