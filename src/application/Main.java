@@ -184,8 +184,8 @@ public class Main extends Application {
         menuBar = new MenuBar();
         application = new Menu("Application");
         details = new Menu("Details");
-        application_view = new ImageView("file:application.png");
-        details_view = new ImageView("file:details.png");
+        application_view = new ImageView("file:../appfiles/application.png");
+        details_view = new ImageView("file:../appfiles/details.png");
         application_view.setFitWidth(20);
         application_view.setPreserveRatio(true);
         application_view.setSmooth(true);
@@ -254,8 +254,10 @@ public class Main extends Application {
         final Spinner<Character> spinner = new Spinner<Character>();
         SpinnerValueFactory<Character> valueFactory = 
                 new SpinnerValueFactory.ListSpinnerValueFactory((ObservableList) letters);
-        spinner.setValueFactory(valueFactory);
-        spinner.setPrefWidth(60);
+        valueFactory.setWrapAround(true);
+        spinner.getStyleClass().add(Spinner.STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL);
+        spinner.setValueFactory(valueFactory);              
+        spinner.setPrefWidth(74);
         spinner.setEditable(false);
         Button okButton = new Button("OK");
         okButton.setOnAction(e -> {
@@ -273,6 +275,8 @@ public class Main extends Application {
             		alert.setTitle("You win");
             		alert.setHeaderText("Congratulations, you win");
             		alert.showAndWait();
+            		currentGame.lives = 6;
+            		update_image();
         			end(true);
         		}
         	}
@@ -295,10 +299,11 @@ public class Main extends Application {
 	}
 	
 	public void update_image() {
+
 		Image image;
 		try {
 			grid.getChildren().remove(imagegroup);
-			image = new Image(new FileInputStream("hangman" + String.valueOf(currentGame.lives) + ".png"));
+			image = new Image(new FileInputStream("../appfiles/hangman" + String.valueOf(currentGame.lives) + ".png"));
 			ImageView imageView = new ImageView(image); 
 		    //imageView.setX(50); 
 		    //imageView.setY(25); 
@@ -567,6 +572,11 @@ public class Main extends Application {
 	@Override
     public void start(Stage primaryStage) {
 		
+		GameInfo[] initial_g_list = new GameInfo[5];
+		for (int i = 0; i < 5; i++) {
+			initial_g_list[i] = new GameInfo();
+		}
+		gamelist = FXCollections.observableArrayList(initial_g_list);
 		points_num = new SimpleStringProperty();
 		word_num = new SimpleStringProperty();
 		successful = new SimpleStringProperty();
@@ -577,7 +587,7 @@ public class Main extends Application {
         initialize_UI(primaryStage);
         set_actions(primaryStage);     
         Scene scene = new Scene(grid);
-        var image = new Image("file:notebook.jpg", true);
+        var image = new Image("file:../appfiles/notebook.jpg", true);
         var bgImage = new BackgroundImage(
                 image,
                 BackgroundRepeat.NO_REPEAT,
@@ -593,30 +603,6 @@ public class Main extends Application {
     }
 	
 	public static void main(String[] args) {
-		GameInfo[] initial_g_list = new GameInfo[5];
-		for (int i = 0; i < 5; i++) {
-			initial_g_list[i] = new GameInfo();
-		}
-		gamelist = FXCollections.observableArrayList(initial_g_list);
-		currentGame = null;
-		currentDictionary = null;
-		String id = "OL31390631M";
-		String nid = "GOT";
-		/*
-		try {
-			currentDictionary = new Dictionary(nid, id, true);
-		} catch (UndersizeException | InvalidCountException | InvalidRangeException | UnbalancedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println(currentDictionary.wordList);
-		currentGame = new Game(currentDictionary);
-		System.out.println(Game.wordList);
-		HashMap<Integer, Integer> result = new HashMap<>(currentDictionary.histogram());
-		for (Integer k : result.keySet()) {
-			System.out.println("Added " + k.toString() + "/" + result.get(k).toString());            	
-        }
-        */
 		launch(args);
 	}
 }
