@@ -4,17 +4,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableArrayBase;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableListBase;
-import javafx.event.*;
 import javafx.stage.Stage;
 import javafx.scene.*;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.control.ButtonBar.*;
@@ -24,36 +18,13 @@ import javafx.scene.image.*;
 import javafx.scene.chart.*;
 import javafx.geometry.*;
 import javafx.util.*;
+
+import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.Object.*;
 import java.net.*;
 import java.util.*;
 
-import javax.swing.JPanel;
-
-import org.json.simple.*;
-import org.json.simple.parser.*;
-
-final class UndersizeException extends Exception {
-	public UndersizeException (int size) {
-		super("Only " + size + " words found.");
-	}
-}
-final class InvalidCountException extends Exception {
-	public InvalidCountException (String word) {
-		super("Found duplicate of " + word);
-	}
-}
-final class InvalidRangeException extends Exception {
-	public InvalidRangeException (int length) {
-		super("Found a word with a length of " + length);
-	}
-}
-final class UnbalancedException extends Exception {
-	public UnbalancedException (int count, int size) {
-		super("Only " + (int)(count*100/size) + "% of words contain 9 or more letters");
-	}
-}
+import javax.imageio.ImageIO;
 
 public class Main extends Application {
 	
@@ -126,7 +97,7 @@ public class Main extends Application {
 			winner = "PLAYER";
 		else
 			winner = "COMPUTER";
-		GameInfo lastgame = new GameInfo(currentGame.target, currentGame.correct + initial_lives - currentGame.lives, winner);
+		GameInfo lastgame = new GameInfo(Game.target, Game.correct + initial_lives - Game.lives, winner);
 		gamelist.add(0, lastgame);
 		gamelist.remove(5);
 		currentGame = null;		
@@ -156,8 +127,8 @@ public class Main extends Application {
 		grid.getChildren().remove(spinroot);		
 		grid.getChildren().remove(b_array_box);
 		grid.getChildren().remove(finbox);
-		button_array = new Button[currentGame.target.length()]; 
-		for (int i = 0; i < currentGame.target.length(); i++) {
+		button_array = new Button[Game.target.length()]; 
+		for (int i = 0; i < Game.target.length(); i++) {
 			button_array[i] = new Button(" ");
 			button_array[i].setId(String.valueOf(i));
 		}
@@ -184,8 +155,8 @@ public class Main extends Application {
         menuBar = new MenuBar();
         application = new Menu("Application");
         details = new Menu("Details");
-        application_view = new ImageView("file:../appfiles/application.png");
-        details_view = new ImageView("file:../appfiles/details.png");
+        application_view = new ImageView(Main.class.getResource("../appfiles/application.png").toString());
+        details_view = new ImageView(Main.class.getResource("../appfiles/details.png").toString()); 
         application_view.setFitWidth(20);
         application_view.setPreserveRatio(true);
         application_view.setSmooth(true);
@@ -248,12 +219,12 @@ public class Main extends Application {
 	public void activate_button(String id) {
 		int pos = Integer.valueOf(id);
 		//Show 
-		ObservableList<Character> letters = FXCollections.observableList(currentGame.sort_by_probability(pos));
+		ObservableList<Character> letters = FXCollections.observableList(Game.sort_by_probability(pos));
 		System.out.println(letters);
 		Label label = new Label("Select letter");
         final Spinner<Character> spinner = new Spinner<Character>();
         SpinnerValueFactory<Character> valueFactory = 
-                new SpinnerValueFactory.ListSpinnerValueFactory((ObservableList) letters);
+                new SpinnerValueFactory.ListSpinnerValueFactory<Character>((ObservableList<Character>) letters);
         valueFactory.setWrapAround(true);
         spinner.getStyleClass().add(Spinner.STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL);
         spinner.setValueFactory(valueFactory);              
@@ -261,13 +232,13 @@ public class Main extends Application {
         spinner.setEditable(false);
         Button okButton = new Button("OK");
         okButton.setOnAction(e -> {
-        	currentGame.play(pos, spinner.getValue());
+        	Game.play(pos, spinner.getValue());
         	grid.getChildren().remove(spinroot);
-        	successful.set(String.valueOf(currentGame.correct*100/(currentGame.correct + initial_lives - currentGame.lives)) + "%");
-        	points_num.set(String.valueOf(currentGame.points));
+        	successful.set(String.valueOf(Game.correct*100/(Game.correct + initial_lives - Game.lives)) + "%");
+        	points_num.set(String.valueOf(Game.points));
         	update_probs();
         	update_image();
-        	if (currentGame.target.charAt(pos) == spinner.getValue()) {
+        	if (Game.target.charAt(pos) == spinner.getValue()) {
         		button_array[Integer.valueOf(id)].setText(Character.toString(spinner.getValue()));
         		button_array[Integer.valueOf(id)].setDisable(true);
         		if (currentGame.won()) {
@@ -275,12 +246,12 @@ public class Main extends Application {
             		alert.setTitle("You win");
             		alert.setHeaderText("Congratulations, you win");
             		alert.showAndWait();
-            		currentGame.lives = 6;
+            		Game.lives = 6;
             		update_image();
         			end(true);
         		}
         	}
-        	if (currentGame.lives <= 0) {
+        	if (Game.lives <= 0) {
         		Alert alert = new Alert(AlertType.ERROR);
         		alert.setTitle("You lose");
         		alert.setHeaderText("You lose, try again");
@@ -303,8 +274,7 @@ public class Main extends Application {
 		Image image;
 		try {
 			grid.getChildren().remove(imagegroup);
-			image = new Image(new FileInputStream("../appfiles/hangman" + String.valueOf(currentGame.lives) + ".png"));
-			ImageView imageView = new ImageView(image); 
+			ImageView imageView = new ImageView(Main.class.getResource("../appfiles/hangman" + String.valueOf(Game.lives) + ".png").toString()); 
 		    //imageView.setX(50); 
 		    //imageView.setY(25); 
 		    imageView.setFitHeight(300); 
@@ -312,7 +282,7 @@ public class Main extends Application {
 		    imageView.setPreserveRatio(true);  
 		    imagegroup = new Group(imageView); 
 		    grid.add(imagegroup, 0, 1);
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			System.out.println("Cannot find image files");
 			e.printStackTrace();
 		}  
@@ -320,14 +290,14 @@ public class Main extends Application {
 	
 	public void update_probs() {
 		grid.getChildren().remove(finbox);
-		Label[] letterLabels = new Label[currentGame.target.length()];
-		Label[] stringLabels = new Label[currentGame.target.length()];
-		VBox[] pairs = new VBox[currentGame.target.length()];
-		for (int i = 0; i < currentGame.target.length(); i++) {
-			String probstring = currentGame.probability_string(i);
+		Label[] letterLabels = new Label[Game.target.length()];
+		Label[] stringLabels = new Label[Game.target.length()];
+		VBox[] pairs = new VBox[Game.target.length()];
+		for (int i = 0; i < Game.target.length(); i++) {
+			String probstring = Game.probability_string(i);
 			letterLabels[i] = new Label("Letter " + String.valueOf(i + 1) + ":");
-			if (!currentGame.active[i])
-				stringLabels[i] = new Label(String.valueOf(currentGame.target.charAt(i)));
+			if (!Game.active[i])
+				stringLabels[i] = new Label(String.valueOf(Game.target.charAt(i)));
 			else
 				stringLabels[i] = new Label(probstring);
 			pairs[i] = new VBox();
@@ -587,7 +557,9 @@ public class Main extends Application {
         initialize_UI(primaryStage);
         set_actions(primaryStage);     
         Scene scene = new Scene(grid);
-        var image = new Image("file:../appfiles/notebook.jpg", true);
+        System.out.println("fff");
+        System.out.println(Main.class.getResource("../appfiles/notebook.jpg").toString());
+        var image = new Image(Main.class.getResource("../appfiles/notebook.jpg").toString(), true);
         var bgImage = new BackgroundImage(
                 image,
                 BackgroundRepeat.NO_REPEAT,

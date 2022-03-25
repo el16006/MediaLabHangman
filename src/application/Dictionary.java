@@ -7,26 +7,6 @@ import java.util.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-final class UndersizeException extends Exception {
-	public UndersizeException (int size) {
-		super("Only " + size + " words found.");
-	}
-}
-final class InvalidCountException extends Exception {
-	public InvalidCountException (String word) {
-		super("Found duplicate of " + word);
-	}
-}
-final class InvalidRangeException extends Exception {
-	public InvalidRangeException (int length) {
-		super("Found a word with a length of " + length);
-	}
-}
-final class UnbalancedException extends Exception {
-	public UnbalancedException (int count, int size) {
-		super("Only " + (int)(count*100/size) + "% of words contain 9 or more letters");
-	}
-}
 /**
  * <h1>A class for dictionaries</h1>
  * <p>
